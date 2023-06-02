@@ -1,0 +1,9 @@
+langchain
+streamlit
+psycopg2-binary
+openai
+gpt4all
+duckduckgo-search
+tiktoken
+beautifulsoup4
+faiss-cpu
