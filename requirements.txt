@@ -1,9 +1,4 @@
 langchain
-streamlit
-psycopg2-binary
+chainlit
 openai
-gpt4all
-duckduckgo-search
-tiktoken
-beautifulsoup4
-faiss-cpu
+

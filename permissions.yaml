@@ -1,0 +1,8 @@
+researcher:
+  allow:
+    - Person
+    - ConditionOccurrence
+    - DrugOccurrence
+    - ProcedureOccurrence
+  deny:
+    - VisitOccurrence

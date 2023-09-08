@@ -20,9 +20,18 @@ class HumanInputChainlit(BaseTool):
     ) -> str:
         """Use the Human input tool."""
         agent = cl.user_session.get("agent")
-        user_q = agent.run(f"The system needs to ask the user for more information. Can you format the following query according to the user's profile and preference ? Note: Stick as best as you can to the meaning of the original query, and do not add any other information, explanation or apologies, but make sure it is tailored to the user profile only based on your previous interactions with the user. Do NOT use a tool to perform this operation. User profile:{user_profile} Query:{query}")
+        prompt = f"""The system needs to ask the user for more information. 
+                     Can you format the following query according to the user's profile and preference ? 
+                     Note: Stick as best as you can to the meaning of the original query, 
+                     do not add any other information, explanation or apologies, 
+                     but make sure it is tailored to the user profile and your previous interactions. 
+                     Do NOT use another tool to perform this operation. 
+                     User profile:{self.user_profile} 
+                     Query:{query}
+                """
+        user_q = agent.run(prompt)
         res = run_sync(cl.AskUserMessage(content=user_q).send())
         if res:
             return res["content"]
         else:
-            return None
+            return "Human did not respond"

@@ -1,18 +1,15 @@
-# from chainlit.prompt import Prompt, PromptMessage
 
-from chainlit import Message
-from chainlit.input_widget import TextInput, Switch
+from chainlit.input_widget import TextInput
 from langchain import PromptTemplate, OpenAI
 from langchain.agents import initialize_agent, Tool, AgentExecutor, AgentType
-from langchain.chains import GraphCypherQAChain
+
 from langchain.chat_models import ChatOpenAI
 import os
 import chainlit as cl
 from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage
-from pprint import pformat, pprint
-from chainlit.client.base import BaseAuthClient, UserDict
+from pprint import pprint
 from chatbot.human_input import HumanInputChainlit
 
 from chatbot.memory import MyMemory
@@ -27,13 +24,6 @@ graph = Neo4jGraph(
     password="rC7s6H6iL3PbQF7lXx6NyDxF3rB3sXBfyj7QSlLGE_s",
     database="neo4j"
 )
-
-#graph = Neo4jGraph(
-#    url="neo4j://localhost:7687",
-#    username="neo4j",
-#    password="neo4j2023",
-#    database="neo4j"
-#)
 
 
 CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database. 
@@ -59,17 +49,29 @@ CYPHER_GENERATION_PROMPT = PromptTemplate(
     input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
 )
 
+# oai = le modèle qui va générer le code cypher pour la db neo4j
+oai = OpenAI(model_name="gpt-4", temperature=0)
+template = CYPHER_GENERATION_TEMPLATE
 
-#@cl.auth_client_factory
-#async def auth_client_factory(handshake_headers, request_headers):
-#    return CustomAuthClient()
+# cypher tool = l'outil qui utilise le modèle (et qui va check les permissions)
+cypher_tool = RBACGraphCypherQAChain.from_llm(
+        oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
+)
+
 
 @cl.on_settings_update
 async def settings_updated(settings):
+    """
+    Executed when chat settings are updated, using the button next to the input box
+    :param settings: the new settings
+    """
+    original_token = cl.user_session.get("settings")["user_token"]
     cl.user_session.set("settings", settings)
-    cl.user_session.set("user_profile", settings["user_profile"])
+
     cl.user_session.set("user_infos","")
-    if settings["user_token"]:
+
+
+    if settings["user_token"] != original_token:
         with open('users.yaml', 'r') as f:
             users = yaml.safe_load(f)
 
@@ -99,26 +101,27 @@ async def settings_updated(settings):
                 hit = cl.user_session.get("human_input_tool")
                 hit.user_profile = settings["user_profile"]
                 cl.user_session.set("human_input_tool", hit)
-
+                cl.user_session.set("user_profile", user["default_profile"])
                 await cl.Message(content=f"Hello {name} !").send()
                 return
 
         await cl.Message(content=f"Meeh, looks like I did not find your token in our users file").send()
     else:
-        await cl.Message(content=f"Don't forget to provide your token first").send()
+        cl.user_session.set("user_profile", settings["user_profile"])
 
 
-@cl.action_callback("le bouton")
-async def le_bouton(action):
-    await cl.Message(content=f"J'avais dit PAS TOUCHE B**** !!!").send()
-    await cl.Message(content=f"T'as gagné, j'enlève le bouton maintenant !").send()
-    await action.remove()
 
-oai = OpenAI(model_name="gpt-4", temperature=0)
-template = CYPHER_GENERATION_TEMPLATE
-cypher_tool = RBACGraphCypherQAChain.from_llm(
-        oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
-)
+user_prompt_template = ChatPromptTemplate.from_messages([
+
+    SystemMessage(
+        content=(
+                "You are a BI assistant that help to find answers to a users' questions about his data. When addressing the user, please make sure to use a language that corresponds the most to this user profile"
+        )
+    ),
+    HumanMessagePromptTemplate.from_template("{question}"),
+])
+
+
 
 @cl.on_chat_start
 async def start():
@@ -131,27 +134,22 @@ async def start():
             TextInput(
                 id="user_profile",
                 label="User profile",
-                initial="I'm the CEO of the most important healthcare center in the country. I am interested in factual information, based on actual data. I like to know how you thought to come to your conclusions. I am not afraid of numbers and medical terms."),
-            #Switch(id="human_input_allowed", label="Je me débrouille tout seul", initial=True),
-
+                initial=""),
         ]).send()
     cl.user_session.set('settings', settings)
     cl.user_session.set('human_input_tool', HumanInputChainlit())
     cl.user_session.set('user_profile', settings["user_profile"])
     cl.user_session.set('user_infos', "")
 
-    #actions = [
-    #    cl.Action(name="le bouton", value="J'avais dit de ne pas toucher !!", description="DO NOT TOUCH me!")
-    #]
-
-    #await cl.Message(content="Voici un bouton:", actions=actions).send()
+    # llm1 = le modèle qui va servir pour l'agent conversationnel
     llm1 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
 
+    # Les outils à disposition de l'agent pour répondre aux questions
     tools = [
         Tool(
             name="Ask for clarification",
             func=cl.user_session.get("human_input_tool")._run,
-            description="As a last resort, when you need to ask the human for clarifications"
+            description="Utilize this tool when you need to ask the human for clarifications"
         ),
 
         Tool(
@@ -166,12 +164,15 @@ async def start():
         )
     ]
 
+    # L'historique du chat
     memory = MyMemory(
         memory_key="chat_history", return_messages=True, )
 
+
+    # Le fameux agent conversationnel (on peut changer le type d'agent, ça change un peu la façon dont il répond).
     agent = initialize_agent(
         tools, llm1,  agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-        prompt=template, streaming=True,
+        prompt=user_prompt_template, streaming=True,
         verbose=True,  memory=memory
     )
 
@@ -179,13 +180,12 @@ async def start():
 
 @cl.on_message
 async def main(message):
-    pprint(cl.user_session.get("user_roles"))
-    pprint(cl.user_session.get("settings"))
     if cl.user_session.get("user_roles") is not None:
         agent = cl.user_session.get("agent")  # type: AgentExecutor
         user_profile = cl.user_session.get("settings")["user_profile"]
 
-
+        # Idéalement il faudrait juste aller injecter le user profile dans le system message
+        # mais c'était du chipotage donc je le redéfinis complètement ici. C'est pas propre.
         user_prompt_template = ChatPromptTemplate.from_messages([
 
             SystemMessage(
