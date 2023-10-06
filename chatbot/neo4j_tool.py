@@ -159,8 +159,15 @@ class RBACGraphCypherQAChain(Chain):
             intermediate_steps.append({"query": generated_cypher})
 
             # Retrieve and limit the number of results
-            context = self.graph.query(generated_cypher)[: self.top_k]
-
+            try:
+                context = self.graph.query(generated_cypher)[: self.top_k]
+            except Exception as err:
+                if "not valid" in str(err):
+                    # The model probably made a mistake, let's ask him to fix that
+                    print("Ugh, we made a mistake, we should fix that")
+                    self.return_direct = True
+                    context = "The generated cypher code was invalid. This is a known bug and we are very sorry. " \
+                              "Our best code monkeys are on the case !"
 
             if self.return_direct:
                 final_result = context

@@ -1,0 +1,4 @@
+roles:
+  "Head of Department": "I'm the head of the emergency departement, I'm mostly interested in factual, data backed information about the KPIs of my department"
+  "Physician": "I'm a physician in the emergency departement, I'm mostly interested about medical information that encompasses multiple patients that help me make the best decisions to provide the best possible care to my patients"
+  "Nurse": "I'm a nurse in the emergency department, I'm mostly interested in medical information that help me provide the best care and avoir any errors for each of my patients. I'm interested in both medical information in general as well as information about specific patients, such as their current treatment or their past medical history"
