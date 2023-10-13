@@ -79,8 +79,7 @@ async def on_question(action):
 
 async def suggest_initial_questions(user_profile):
     agent = cl.user_session.get("agent")
-    await cl.Message(
-        content=f'Your new user profile is defined with the default setting as : {user_profile}').send()
+
 
     response = await cl.make_async(agent.run)(
         f"given what you know about the database, and the following user profile : \n{user_profile}\n\nPlease provide 3 proposals for analytical questions about the data that this type of user might potentially be interested in. Write each question on one single line, do not add anything to the text, it should only contain your questions.")
@@ -100,7 +99,7 @@ async def settings_updated(settings):
     cl.user_session.set("settings", settings)
 
     cl.user_session.set("user_infos", "")
-    pprint(settings)
+
     role = settings["role"] if "role" in settings.keys() else None
     previous_role = cl.user_session.get('role')
     if role is not None and previous_role != role:
@@ -130,8 +129,10 @@ async def settings_updated(settings):
             cl.user_session.set('user_profile', user_profile)
             settings["user_profile"] = user_profile
             cl.user_session.set('settings', settings)
+            await cl.Message(
+                content=f'Your new user profile is defined with the default setting as : {user_profile}').send()
             if suggestions_are_enabled():
-                await suggest_initial_questions()
+                await suggest_initial_questions(user_profile)
 
 
 
