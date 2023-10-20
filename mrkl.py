@@ -1,17 +1,18 @@
 from chainlit.input_widget import TextInput, Select, Switch
-from langchain import PromptTemplate, OpenAI
-from langchain.agents import initialize_agent, Tool, AgentExecutor, AgentType
-
+from langchain import PromptTemplate, OpenAI, ConversationChain
+from langchain.agents import initialize_agent, Tool, AgentExecutor, AgentType, ConversationalAgent, ZeroShotAgent
+from langchain.memory import ConversationEntityMemory
+from langchain.memory.prompt import ENTITY_MEMORY_CONVERSATION_TEMPLATE
 from langchain.chat_models import ChatOpenAI
 import os
 import chainlit as cl
 from langchain.graphs import Neo4jGraph
-from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain.schema import SystemMessage
+from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from langchain.schema import SystemMessage, OutputParserException
 from pprint import pprint
 from chatbot.human_input import HumanInputChainlit
-
-from chatbot.memory import MyMemory
+from chatbot.prompts import create_prompt
+from chatbot.memory import MyMemory, ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
 import yaml
 
@@ -48,7 +49,7 @@ CYPHER_GENERATION_PROMPT = PromptTemplate(
 )
 
 # oai = le modèle qui va générer le code cypher pour la db neo4j
-oai = OpenAI(model_name="gpt-4", temperature=0)
+oai = ChatOpenAI(model_name="gpt-4", temperature=0)
 template = CYPHER_GENERATION_TEMPLATE
 
 # cypher tool = l'outil qui utilise le modèle (et qui va check les permissions)
@@ -177,15 +178,6 @@ async def settings_updated(settings):
     #     cl.user_session.set("user_profile", settings["user_profile"])
 
 
-user_prompt_template = ChatPromptTemplate.from_messages([
-
-    SystemMessage(
-        content=(
-            "You are a BI assistant that help to find answers to a users' questions about his data. When addressing the user, please make sure to use a language that corresponds the most to this user profile"
-        )
-    ),
-    HumanMessagePromptTemplate.from_template("{question}"),
-])
 
 
 def load_roles():
@@ -193,10 +185,14 @@ def load_roles():
         roles = yaml.safe_load(f)
 
     return roles
+gpt4 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
+memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "agent_scratchpad"])
+tool_names = []
 @cl.on_chat_start
 async def start():
     roles= load_roles()
-    role_names = roles['roles'].keys()
+    role_names = list(roles['roles'].keys())
+
     settings = await cl.ChatSettings(
         [
             Select(
@@ -220,8 +216,8 @@ async def start():
     cl.user_session.set('user_profile', settings["user_profile"])
     cl.user_session.set('user_infos', "")
 
-    # llm1 = le modèle qui va servir pour l'agent conversationnel
-    llm1 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
+    # gpt4 = le modèle qui va servir pour l'agent conversationnel
+
 
     # Les outils à disposition de l'agent pour répondre aux questions
     tools = [
@@ -240,45 +236,59 @@ async def start():
                  This specialized tool offers streamlined search capabilities
                  to help you find the information you need with ease.
                  """
-        )
+        ),
     ]
 
-    # L'historique du chat
-    memory = MyMemory(
-        memory_key="chat_history", return_messages=True, )
+
 
     # Le fameux agent conversationnel (on peut changer le type d'agent, ça change un peu la façon dont il répond).
-    agent = initialize_agent(
-        tools, llm1, agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-        prompt=user_prompt_template, streaming=True,
-        verbose=True, memory=memory
+
+
+    llm_chain = ConversationChain(memory=memory, prompt=create_prompt(tools), llm=gpt4)
+    tool_names = [tool.name for tool in tools]
+
+    #conv_agent = ConversationalAgent(llm_chain=llm_chain, allowed_tools=tool_names)
+    agent2 = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
+    agent_executor = AgentExecutor.from_agent_and_tools(
+         agent=agent2,
+         tools=tools,
+         streaming=True,
+         verbose=True,
     )
 
-    cl.user_session.set("agent", agent)
+    #agent_executor = initialize_agent(
+    #    tools, gpt4, agent=AgentType.C,
+    #    prompt=ENTITY_MEMORY_CONVERSATION_TEMPLATE,
+    #    streaming=True,
+    #    verbose=True,
+    #    memory=memory
+    #)
+
+    cl.user_session.set("agent", agent_executor)
 
 def suggestions_are_enabled():
     return cl.user_session.get('settings').get('generate_suggestions')
 
+
 @cl.on_message
 async def main(message):
-    agent = cl.user_session.get("agent")  # type: AgentExecutor
+    agent_executor = cl.user_session.get("agent")  # type: AgentExecutor
     user_profile = cl.user_session.get("settings")["user_profile"]
-    # Idéalement il faudrait juste aller injecter le user profile dans le system message
-    # mais c'était du chipotage donc je le redéfinis complètement ici. C'est pas propre.
-    user_prompt_template = ChatPromptTemplate.from_messages([
-        SystemMessage(
-            content=(
-                    "You are a BI assistant that help to find answers to a users' questions about his data. When addressing the user, please make sure to use a language that corresponds the most to this user profile: " + user_profile
-            )
-        ),
-        HumanMessagePromptTemplate.from_template("{question}"),
-    ])
 
-    prompt = user_prompt_template.format_messages(question=message, user_profile=user_profile)
-    response = await cl.make_async(agent.run)(prompt, callbacks=[cl.LangchainCallbackHandler()])
-    await cl.Message(content=response).send()
+    try:
+        response = await cl.make_async(agent_executor.run)({"input":message, "user_profile":user_profile},callbacks=[cl.LangchainCallbackHandler()])
+    except OutputParserException as e:
+        if "Final Answer:" in str(e):
+            position = str(e).find("Final Answer:")
+            response = str(e)[position+16:]
+        else:
+            response = str(e)
+
+    await cl.Message(content=response, disable_human_feedback=True).send()
 
     if suggestions_are_enabled():
-        prompt2 = user_prompt_template.format_messages(question="based on the previous questions, please generate a few additional questions related to the same topic if relevant. If you feel like this is not the time to do so, just output a nice message to tell the user you are there to help. ", user_profile=user_profile)
-        response = await cl.make_async(agent.run)(prompt2, callbacks=[cl.LangchainCallbackHandler()])
+        question="based on the previous questions, please generate a few additional questions related to the same topic if relevant. If you feel like this is not the time to do so, just output a nice message to tell the user you are there to help."
+        response = await cl.make_async(agent_executor.run)({"input": question, "user_profile": user_profile},
+                                                           callbacks=[cl.LangchainCallbackHandler()])
+
         await cl.Message(content=response).send()

@@ -164,10 +164,31 @@ class RBACGraphCypherQAChain(Chain):
             except Exception as err:
                 if "not valid" in str(err):
                     # The model probably made a mistake, let's ask him to fix that
-                    print("Ugh, we made a mistake, we should fix that")
-                    self.return_direct = True
-                    context = "The generated cypher code was invalid. This is a known bug and we are very sorry. " \
-                              "Our best code monkeys are on the case !"
+                    attempts_left_to_fix = 3
+                    original_question = question
+                    error = err
+                    while attempts_left_to_fix > 0:
+                        question = f"""Your previous attempt at generating cypher failed.
+                        You generated the following query: '{generated_cypher}' and the database returned the following error: {str(error)}
+                        Please try to fix that while answering the question: {original_question}"""
+
+                        generated_cypher = self.cypher_generation_chain.run(
+                            {"question": question, "schema": self.graph.get_schema}, callbacks=callbacks
+                        )
+
+                        try:
+                            context = self.graph.query(generated_cypher)[: self.top_k]
+                            break
+                        except Exception as err:
+                            attempts_left_to_fix = attempts_left_to_fix - 1
+                            error = err
+
+                    if attempts_left_to_fix == 0:
+                        print("Ugh, we made a mistake, we should fix that")
+                        self.return_direct = True
+                        context = "The generated cypher code was invalid. This is a known bug and we are very sorry. " \
+                                  "Our best code monkeys are on the case !"
+
 
             if self.return_direct:
                 final_result = context
