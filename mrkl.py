@@ -7,12 +7,11 @@ from langchain.chat_models import ChatOpenAI
 import os
 import chainlit as cl
 from langchain.graphs import Neo4jGraph
-from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
-from pprint import pprint
 from chatbot.human_input import HumanInputChainlit
 from chatbot.prompts import create_prompt
-from chatbot.memory import MyMemory, ExtendedConversationEntityMemory
+from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
 import yaml
 
