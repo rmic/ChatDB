@@ -28,14 +28,9 @@ CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph 
 Schema:
 {schema}
 Instructions:
-Execute one or more queries to answer the user's question
-The following node types are present in the database:
-Person: represent people aka. patients
-ConditionOccurrence: represent condition or diseases diagnosed 
-DrugOccurrence: Represent a drug or medication being prescribed to a patient
-ProcedureOccurrence: represent a medical procedure carried out on a patient
-Other node types and relationships exist in the database, please only generate cypher code that make use of existing node types and relationships
-Note: Do make use of the existing relationships, especially between person and ConditionOccurrence, DrugOccurrence and ProcedureOccurrence, everytime you can, before attempting to build any external computation.
+Execute one or more queries to answer the user's question please only generate cypher code that make use of existing node types and relationships and pay a special attention to the direction of the relationships.
+
+Note: Do make use of the existing relationships
 Start by analyzing the graph schema, then build your cypher query around it.
 Do not include any explanations or apologies in your responses.
 Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
