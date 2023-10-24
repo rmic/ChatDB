@@ -1,7 +1,7 @@
 import pandas as pd
 
-labe = pd.read_csv("/Users/rm/Downloads/MIMIC IV SP/labevents.csv/labevents.csv")
+procs = pd.read_csv("/Users/rm/Downloads/MIMIC IV SP/d_icd_procedures.csv/d_icd_procedures.csv")
 
-labe = labe.sample(n=10000)
-
-labe.to_csv("labe_sample.csv", index=False)
+procs = procs[['icd_code', 'icd_version', 'long_title']]
+procs_uniq = procs.drop_duplicates(keep=False)
+procs_uniq.to_csv("procs.csv", index=False)

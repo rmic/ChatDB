@@ -1,4 +1,23 @@
 from langchain.prompts.prompt import PromptTemplate
+
+CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database. 
+Schema:
+{schema}
+Instructions:
+Execute one or more queries to answer the user's question please only generate cypher code that make use of existing node types and relationships and pay a special attention to the direction of the relationships.
+
+Note: Do make use of the existing relationships
+Start by analyzing the graph schema, then build your cypher query around it.
+Do not include any explanations or apologies in your responses.
+Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
+Do not include any text except the generated Cypher statement.
+The question is:
+{question}"""
+
+CYPHER_GENERATION_PROMPT = PromptTemplate(
+    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+)
+
 PREFIX = """Answer the following questions as best you can. You have access to the following tools:"""
 FORMAT_INSTRUCTIONS = """Use the following format:
 

@@ -10,7 +10,7 @@ from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
 from chatbot.human_input import HumanInputChainlit
-from chatbot.prompts import create_prompt
+from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
 import yaml
@@ -24,23 +24,6 @@ graph = Neo4jGraph(
     database="neo4j"
 )
 
-CYPHER_GENERATION_TEMPLATE = """Task:Generate Cypher statement to query a graph database. 
-Schema:
-{schema}
-Instructions:
-Execute one or more queries to answer the user's question please only generate cypher code that make use of existing node types and relationships and pay a special attention to the direction of the relationships.
-
-Note: Do make use of the existing relationships
-Start by analyzing the graph schema, then build your cypher query around it.
-Do not include any explanations or apologies in your responses.
-Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
-Do not include any text except the generated Cypher statement.
-The question is:
-{question}"""
-
-CYPHER_GENERATION_PROMPT = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
-)
 
 # oai = le modèle qui va générer le code cypher pour la db neo4j
 oai = ChatOpenAI(model_name="gpt-4", temperature=0)
@@ -50,7 +33,6 @@ template = CYPHER_GENERATION_TEMPLATE
 cypher_tool = RBACGraphCypherQAChain.from_llm(
     oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
 )
-
 
 @cl.action_callback("Ask !")
 async def on_question(action):
@@ -241,7 +223,6 @@ async def start():
     llm_chain = ConversationChain(memory=memory, prompt=create_prompt(tools), llm=gpt4)
     tool_names = [tool.name for tool in tools]
 
-    #conv_agent = ConversationalAgent(llm_chain=llm_chain, allowed_tools=tool_names)
     agent2 = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
     agent_executor = AgentExecutor.from_agent_and_tools(
          agent=agent2,
@@ -250,14 +231,6 @@ async def start():
          verbose=True,
     )
 
-    #agent_executor = initialize_agent(
-    #    tools, gpt4, agent=AgentType.C,
-    #    prompt=ENTITY_MEMORY_CONVERSATION_TEMPLATE,
-    #    streaming=True,
-    #    verbose=True,
-    #    memory=memory
-    #)
-
     cl.user_session.set("agent", agent_executor)
 
 def suggestions_are_enabled():
@@ -265,12 +238,12 @@ def suggestions_are_enabled():
 
 
 @cl.on_message
-async def main(message):
+async def main(message: cl.Message):
     agent_executor = cl.user_session.get("agent")  # type: AgentExecutor
     user_profile = cl.user_session.get("settings")["user_profile"]
 
     try:
-        response = await cl.make_async(agent_executor.run)({"input":message, "user_profile":user_profile},callbacks=[cl.LangchainCallbackHandler()])
+        response = await cl.make_async(agent_executor.run)({"input":str(message.content), "user_profile":user_profile},callbacks=[cl.LangchainCallbackHandler()])
     except OutputParserException as e:
         if "Final Answer:" in str(e):
             position = str(e).find("Final Answer:")

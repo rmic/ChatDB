@@ -11,7 +11,7 @@ public = true
 # local will create a database in your .chainlit directory (requires node.js installed).
 # cloud will use the Chainlit cloud database.
 # custom will load use your custom client.
-database = "local"
+#database = "local"
 
 # Whether to enable telemetry (default: true). No personal data is collected.
 enable_telemetry = false
@@ -36,7 +36,7 @@ cache = false
 name = "😺㏈ ⌗"
 
 # Description of the app and chatbot. This is used for HTML tags.
-# description = ""
+description = "A demo of a BI chatbot"
 
 # The default value for the expand messages settings.
 default_expand_messages = false
@@ -45,7 +45,7 @@ default_expand_messages = false
 hide_cot = false
 
 # Link to your github repo. This will add a github button in the UI's header.
-# github = ""
+github = "https://github.com/rmic/ChatDB"
 
 # Override default MUI light theme. (Check theme.ts)
 [UI.theme.light]
