@@ -153,7 +153,9 @@ async def settings_updated(settings):
     # else:
     #     cl.user_session.set("user_profile", settings["user_profile"])
 
-
+gpt4 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
+memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "agent_scratchpad"])
+tool_names = []
 
 
 def load_roles():
@@ -161,9 +163,7 @@ def load_roles():
         roles = yaml.safe_load(f)
 
     return roles
-gpt4 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
-memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "agent_scratchpad"])
-tool_names = []
+
 @cl.on_chat_start
 async def start():
     roles= load_roles()
@@ -192,7 +192,6 @@ async def start():
     cl.user_session.set('user_profile', settings["user_profile"])
     cl.user_session.set('user_infos', "")
 
-    # gpt4 = le modèle qui va servir pour l'agent conversationnel
 
 
     # Les outils à disposition de l'agent pour répondre aux questions
@@ -218,14 +217,12 @@ async def start():
 
 
     # Le fameux agent conversationnel (on peut changer le type d'agent, ça change un peu la façon dont il répond).
-
-
     llm_chain = ConversationChain(memory=memory, prompt=create_prompt(tools), llm=gpt4)
     tool_names = [tool.name for tool in tools]
 
-    agent2 = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
+    agent = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
     agent_executor = AgentExecutor.from_agent_and_tools(
-         agent=agent2,
+         agent=agent,
          tools=tools,
          streaming=True,
          verbose=True,
