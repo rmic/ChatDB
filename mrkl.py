@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from chainlit.input_widget import TextInput, Select, Switch
 from langchain import PromptTemplate, OpenAI, ConversationChain
 from langchain.agents import initialize_agent, Tool, AgentExecutor, AgentType, ConversationalAgent, ZeroShotAgent
@@ -16,14 +19,16 @@ from chatbot.neo4j_tool import RBACGraphCypherQAChain
 import yaml
 
 os.environ["OPENAI_API_KEY"] = "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"
-
-graph = Neo4jGraph(
-    url="neo4j+s://26aef8a7.databases.neo4j.io",
-    username="neo4j",
-    password="rC7s6H6iL3PbQF7lXx6NyDxF3rB3sXBfyj7QSlLGE_s",
-    database="neo4j"
-)
-
+try:
+    graph = Neo4jGraph(
+        url="neo4j+s://26aef8a7.databases.neo4j.io",
+        username="neo4j",
+        password="rC7s6H6iL3PbQF7lXx6NyDxF3rB3sXBfyj7QSlLGE_s",
+        database="neo4j"
+    )
+except ValueError:
+    logging.error("On dirait que la db neo4j est down ou en pause.\nVa voir sur https://console.neo4j.io/?product=aura-db#databases/26aef8a7/detail et clique sur ▶️")
+    sys.exit(1)
 
 # oai = le modèle qui va générer le code cypher pour la db neo4j
 oai = ChatOpenAI(model_name="gpt-4", temperature=0)
@@ -38,8 +43,7 @@ cypher_tool = RBACGraphCypherQAChain.from_llm(
 async def on_question(action):
     agent = cl.user_session.get("agent")  # type: AgentExecutor
     user_profile = cl.user_session.get("settings")["user_profile"]
-    # Idéalement il faudrait juste aller injecter le user profile dans le system message
-    # mais c'était du chipotage donc je le redéfinis complètement ici. C'est pas propre.
+
     user_prompt_template = ChatPromptTemplate.from_messages([
         SystemMessage(
             content=(
@@ -113,45 +117,6 @@ async def settings_updated(settings):
 
 
 
-    # if settings["user_token"]:
-    #     with open('users.yaml', 'r') as f:
-    #         users = yaml.safe_load(f)
-    #
-    #     for name, user in users.items():
-    #         if user["token"].strip() == settings["user_token"].strip():
-    #             pprint(user)
-    #             cl.user_session.set("username", name)
-    #             cl.user_session.set("user_roles", user["roles"])
-    #             cypher_tool.user_roles = user["roles"]
-    #             with open('permissions.yaml', 'r') as f:
-    #                 permissions = yaml.safe_load(f)
-    #
-    #             denied = []
-    #             allowed = []
-    #             if permissions:
-    #                 for role in user["roles"]:
-    #                     if role in permissions.keys():
-    #                         if "allow" in permissions[role]:
-    #                             allowed.extend(permissions[role]["allow"])
-    #                         if "deny" in permissions[role]:
-    #                             denied.extend(permissions[role]["deny"])
-    #
-    #                 cypher_tool.user_roles = user["roles"]
-    #                 cypher_tool.user_allowed = list(set(allowed))
-    #                 cypher_tool.user_denied = list(set(denied))
-    #
-    #             hit = cl.user_session.get("human_input_tool")
-    #             hit.user_profile = settings["user_profile"]
-    #
-    #             cl.user_session.set("human_input_tool", hit)
-    #             cl.user_session.set("user_profile", user["default_profile"])
-    #             cl.user_session.set("settings")["user_profile"] = user["default_profile"]
-    #             await cl.Message(content=f"Hello {name} !").send()
-    #             return
-    #
-    #     await cl.Message(content=f"Meeh, looks like I did not find your token in our users file").send()
-    # else:
-    #     cl.user_session.set("user_profile", settings["user_profile"])
 
 gpt4 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
 memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "agent_scratchpad"])
