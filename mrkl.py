@@ -1,3 +1,4 @@
+import datetime
 import logging
 import sys
 
@@ -217,7 +218,7 @@ async def main(message: cl.Message):
 
     if suggestions_are_enabled():
         question="based on the previous questions, please generate a few additional questions related to the same topic if relevant. If you feel like this is not the time to do so, just output a nice message to tell the user you are there to help."
-        response = await cl.make_async(agent_executor.run)({"input": question, "user_profile": user_profile},
+        response = await cl.make_async(agent_executor.run)({"input": question, "user_profile": user_profile, "today": datetime.now().strftime("%Y-%m-%d")},
                                                            callbacks=[cl.LangchainCallbackHandler()])
 
         await cl.Message(content=response).send()
