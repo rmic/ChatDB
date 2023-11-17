@@ -136,7 +136,7 @@ class RBACGraphCypherQAChain(Chain):
         intermediate_steps: List = []
 
         generated_cypher = self.cypher_generation_chain.run(
-            {"question": question, "today": datetime.now().strftime("%Y-%m-%d"), "schema": self.graph.get_schema}, callbacks=callbacks
+            {"question": question, "today": datetime.datetime.now().strftime("%Y-%m-%d"), "schema": self.graph.get_schema}, callbacks=callbacks
         )
 
         # Extract Cypher code if it is wrapped in backticks
