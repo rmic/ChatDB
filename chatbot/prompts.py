@@ -8,6 +8,7 @@ Execute one or more queries to answer the user's question please only generate c
 
 Note: Do make use of the existing relationships
 Start by analyzing the graph schema, then build your cypher query around it.
+If a part of your query is based on dates or time frames, take into account that today's date is {today}
 Do not include any explanations or apologies in your responses.
 Do not respond to any questions that might ask anything else than for you to construct a Cypher statement.
 Do not include any text except the generated Cypher statement.
@@ -15,7 +16,7 @@ The question is:
 {question}"""
 
 CYPHER_GENERATION_PROMPT = PromptTemplate(
-    input_variables=["schema", "question"], template=CYPHER_GENERATION_TEMPLATE
+    input_variables=["schema", "today", "question"], template=CYPHER_GENERATION_TEMPLATE
 )
 
 PREFIX = """Répondez aux questions suivantes du mieux que vous pouvez. Vous avez accès aux outils suivants:"""

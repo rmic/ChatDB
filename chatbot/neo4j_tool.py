@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from typing import Any, Dict, List, Optional
-
+import datetime
 from langchain.callbacks.manager import CallbackManagerForChainRun
 from langchain.chains.base import Chain
 from langchain.chains.graph_qa.prompts import CYPHER_GENERATION_PROMPT, CYPHER_QA_PROMPT
@@ -136,7 +136,7 @@ class RBACGraphCypherQAChain(Chain):
         intermediate_steps: List = []
 
         generated_cypher = self.cypher_generation_chain.run(
-            {"question": question, "schema": self.graph.get_schema}, callbacks=callbacks
+            {"question": question, "today": datetime.now().strftime("%Y-%m-%d"), "schema": self.graph.get_schema}, callbacks=callbacks
         )
 
         # Extract Cypher code if it is wrapped in backticks
