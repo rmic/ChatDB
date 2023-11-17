@@ -120,7 +120,7 @@ async def settings_updated(settings):
 
 
 gpt4 = ChatOpenAI(model_name="gpt-4", temperature=0, streaming=True)
-memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "agent_scratchpad"])
+memory = ExtendedConversationEntityMemory(llm=gpt4, return_messages=True, extra_variables=["entities", "user_profile", "today", "agent_scratchpad"])
 tool_names = []
 
 
@@ -206,7 +206,7 @@ async def main(message: cl.Message):
     user_profile = cl.user_session.get("settings")["user_profile"]
 
     try:
-        response = await cl.make_async(agent_executor.run)({"input":str(message.content), "user_profile":user_profile},callbacks=[cl.LangchainCallbackHandler()])
+        response = await cl.make_async(agent_executor.run)({"input":str(message.content), "user_profile":user_profile, "today":datetime.datetime.now().strftime("%Y-%m-%d")},callbacks=[cl.LangchainCallbackHandler()])
     except OutputParserException as e:
         if "Final Answer:" in str(e):
             position = str(e).find("Final Answer:")

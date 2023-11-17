@@ -23,14 +23,15 @@ PREFIX = """Répondez aux questions suivantes du mieux que vous pouvez. Vous ave
 #Ne pas changer les intitulés "Action", "Observation",...
 FORMAT_INSTRUCTIONS = """Use the following format:
 
-Question: la question à laquelle vous devez répondre
-Thought: il faut toujours penser à ce qu'il faut faire
-Action: l'action à entreprendre, qui doit être l'une des [{tool_names}]. S'il n'y a pas d'action à entreprendre, il suffit de renvoyer la réponse finale à l'utilisateur sans essayer d'utiliser un outil.
-Observation: le résultat de l'action
-... (ce Thought/Action/Action Input/Observation peut être répété N  fois)
-Thought: Je connais maintenant la réponse finale
-Final Answer: la réponse finale, exprimée en français, à la question entrée"""
-SUFFIX = """Commençons!
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]. If there is no action to take, simply return the final answer to the user without trying to use a tool.
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question, IN FRENCH"""
+SUFFIX = """Begin!
 
 Question: {input}
 Thought:{agent_scratchpad}"""
@@ -65,7 +66,7 @@ def create_prompt(tools):
     zero_shot_template = "\n\n".join([PREFIX, tool_strings, format_instructions, SUFFIX])
 
     chat_db_prompt = PromptTemplate(
-        input_variables=["entities", "history", "agent_scratchpad", "user_profile", "input"],
+        input_variables=["entities", "history", "agent_scratchpad", "today", "user_profile", "input"],
         template=CONVERSATION_TEMPLATE + "\n\n" + zero_shot_template
     )
 
