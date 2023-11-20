@@ -9,7 +9,7 @@ Ce chatbot a accès aux données concernant les admissions à l'hôpital, les in
 
 Concrètement,
 
-#Informations sur les admissions
+Informations sur les admissions
 -------------------------------
 • La date et l'heure de l’admission du patient au sein de l’hôpital
 • Le type d’admission (Ambulatory observation, Direct Emer, Direct observation, Elective, EU observation, EW emer, Observation Admit, Surgical Same Day Admission, Urgent) 
@@ -20,20 +20,20 @@ Concrètement,
 • La race du patient
 • Une indication sur le décès du patient au sien de l’hôpital ou non
   
-#Informations sur les patients
+Informations sur les patients
 -----------------------------
 • Les informations démographiques de base, à savoir : le genre, l’âge, et l’éventuel date de mort du patient.
 
-#Informations sur les services d'hospitalisation
+Informations sur les services d'hospitalisation
 -----------------------------------------------
 • Le service dans lequel chaque patient a été admis 
 • Les éventuels transferts que le patient aurait fait d’un service à un autre (+date).
 
-#Informations sur les diagnostiques
+Informations sur les diagnostiques
 ----------------------------------
 • Les diagnostics associés au séjour des patients à l’hôpital.
 
-#Informations sur les analyses de laboratoire
+Informations sur les analyses de laboratoire
 --------------------------------------------
 • Le type d’échantillon utilisé
 • La date et l'heure auxquelles l’échantillon a été enregistré
@@ -41,12 +41,12 @@ Concrètement,
 • Le résultat anormal ou non de l’analyse 
 • Le niveau de priorité de l’analyse
 
-#Informations sur les interventions
+Informations sur les interventions
 ----------------------------------
 • Les interventions réalisées sur les patients de l’hôpital (e.g. Bypass)
 • Leur date 
 
-#Informations sur les administrations de médicaments
+Informations sur les administrations de médicaments
 ---------------------------------------------------
 • Les médicaments administrés aux patients
 • Une description des médicaments
