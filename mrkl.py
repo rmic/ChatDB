@@ -112,7 +112,7 @@ async def settings_updated(settings):
             settings["user_profile"] = user_profile
             cl.user_session.set('settings', settings)
             await cl.Message(
-                content=f'Your new user profile is defined with the default setting as : {user_profile}').send()
+                content=f'Votre profil utilisateur est le suivant : {user_profile}').send()
             if suggestions_are_enabled():
                 await suggest_initial_questions(user_profile)
 
