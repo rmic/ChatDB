@@ -12,7 +12,9 @@ Concrètement,
 Informations sur les admissions
 -------------------------------
 • La date et l'heure de l’admission du patient au sein de l’hôpital
+
 • Le type d’admission (Ambulatory observation, Direct Emer, Direct observation, Elective, EU observation, EW emer, Observation Admit, Surgical Same Day Admission, Urgent) 
+
 • La raison de l'admission
 • L'assurance du patient
 • La langue parlée par le patient
