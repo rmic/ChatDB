@@ -1,4 +1,4 @@
-# Welcome to B2Data!
+# Bienvenue sur B2Data!
 
 Désireux d'explorer le potentiel de B2Data ?
  
