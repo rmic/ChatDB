@@ -1,3 +1,4 @@
+![B2Data](/public/logo_dark.png)
 # Welcome to B2Data!
 
 Désireux d'explorer le potentiel de B2Data ?
