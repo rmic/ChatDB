@@ -1,5 +1,7 @@
 import datetime
+import json
 import logging
+import re
 import sys
 
 from chainlit.input_widget import TextInput, Select, Switch
@@ -14,9 +16,10 @@ from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
 from chatbot.human_input import HumanInputChainlit
-from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT
+from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT, CHART_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
+from chatbot.chart_tool import ChartChain
 import yaml
 
 os.environ["OPENAI_API_KEY"] = "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"
@@ -40,6 +43,9 @@ cypher_tool = RBACGraphCypherQAChain.from_llm(
     oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
 )
 
+chart_tool = ChartChain.from_llm(
+    oai, verbose=True, prompt=CHART_GENERATION_PROMPT
+)
 @cl.action_callback("Ask !")
 async def on_question(action):
     agent = cl.user_session.get("agent")  # type: AgentExecutor
@@ -135,6 +141,23 @@ async def start():
     roles= load_roles()
     role_names = list(roles['roles'].keys())
 
+    lines= []
+    with open("Welcome_Page", "r") as fp:
+        lines = fp.readlines()
+    elements = [
+
+    ]
+    current_text = ''
+    for line in lines:
+        if not line.startswith('!'):
+            current_text += line
+        else:
+            elements.append(cl.Text(content=current_text, display="inline"))
+            current_text = ""
+            image_file = line.split('(')[1].split(')')[0]
+            elements.append(cl.Image(url=image_file))
+
+    await cl.Message(content="Welcome", elements=elements).send()
     settings = await cl.ChatSettings(
         [
             Select(
@@ -178,6 +201,16 @@ async def start():
                  to help you find the information you need with ease.
                  """
         ),
+        Tool(
+            name="Chart generation tool",
+            func=chart_tool.run,
+            description = """
+                     Utilize this tool to generate a chart url that will be displayed in the chat,
+                     This tool is to be used when numerical data is requested and a graphical visualization 
+                     would provide a better user experience.
+                     When using this tool, if the response begins with "Final Answer", just forward it without adding anything around it.
+                     """
+        )
     ]
 
 
@@ -200,6 +233,11 @@ def suggestions_are_enabled():
     return cl.user_session.get('settings').get('generate_suggestions')
 
 
+def extract_url(text):
+    """Extrait l'URL d'un texte donné."""
+    url_pattern = r"https://quickchart.io/chart?c=(.*)}"
+    return re.match(url_pattern, r"https://quickchart.io/chart?c=\1").group(0)
+
 @cl.on_message
 async def main(message: cl.Message):
     agent_executor = cl.user_session.get("agent")  # type: AgentExecutor
@@ -214,11 +252,12 @@ async def main(message: cl.Message):
         else:
             response = str(e)
 
-    await cl.Message(content=response, disable_human_feedback=True).send()
+        await cl.Message(content=response, disable_human_feedback=True).send()
 
     if suggestions_are_enabled():
         question="based on the previous questions, please generate a few additional questions related to the same topic if relevant. If you feel like this is not the time to do so, just output a nice message to tell the user you are there to help."
         response = await cl.make_async(agent_executor.run)({"input": question, "user_profile": user_profile, "today": datetime.datetime.now().strftime("%Y-%m-%d")},
                                                            callbacks=[cl.LangchainCallbackHandler()])
+
 
         await cl.Message(content=response).send()
