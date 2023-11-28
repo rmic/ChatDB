@@ -7,6 +7,8 @@ Voici toutes les informations dont je dispose pour répondre à vos besoins...
 En résumé, 
 Ce chatbot a accès aux données concernant les admissions à l'hôpital, les informations personnelles des patients, les services où se trouvent les patients, les diagnostics effectués sur les patients, les analyses de laboratoire, les interventions et les prescriptions de médicaments.
 
+![database](/public/database_schema_vf.png)
+
 Concrètement,
 
 Informations sur les admissions

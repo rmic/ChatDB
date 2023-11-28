@@ -16,7 +16,7 @@ from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
 from chatbot.human_input import HumanInputChainlit
-from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT, CHART_GENERATION_PROMPT
+from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT # , CHART_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
 from chatbot.chart_tool import ChartChain
@@ -43,9 +43,9 @@ cypher_tool = RBACGraphCypherQAChain.from_llm(
     oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
 )
 
-chart_tool = ChartChain.from_llm(
-    oai, verbose=True, prompt=CHART_GENERATION_PROMPT
-)
+#chart_tool = ChartChain.from_llm(
+#    oai, verbose=True, prompt=CHART_GENERATION_PROMPT
+#)
 @cl.action_callback("Ask !")
 async def on_question(action):
     agent = cl.user_session.get("agent")  # type: AgentExecutor
@@ -142,22 +142,7 @@ async def start():
     role_names = list(roles['roles'].keys())
 
     lines= []
-    with open("Welcome_Page", "r") as fp:
-        lines = fp.readlines()
-    elements = [
 
-    ]
-    current_text = ''
-    for line in lines:
-        if not line.startswith('!'):
-            current_text += line
-        else:
-            elements.append(cl.Text(content=current_text, display="inline"))
-            current_text = ""
-            image_file = line.split('(')[1].split(')')[0]
-            elements.append(cl.Image(url=image_file))
-
-    await cl.Message(content="Welcome", elements=elements).send()
     settings = await cl.ChatSettings(
         [
             Select(
@@ -201,16 +186,16 @@ async def start():
                  to help you find the information you need with ease.
                  """
         ),
-        Tool(
-            name="Chart generation tool",
-            func=chart_tool.run,
-            description = """
-                     Utilize this tool to generate a chart url that will be displayed in the chat,
-                     This tool is to be used when numerical data is requested and a graphical visualization 
-                     would provide a better user experience.
-                     When using this tool, if the response begins with "Final Answer", just forward it without adding anything around it.
-                     """
-        )
+        # Tool(
+        #     name="Chart generation tool",
+        #     func=chart_tool.run,
+        #     description = """
+        #              Utilize this tool to generate a chart url that will be displayed in the chat,
+        #              This tool is to be used when numerical data is requested and a graphical visualization
+        #              would provide a better user experience.
+        #              When using this tool, if the response begins with "Final Answer", just forward it without adding anything around it.
+        #              """
+        # )
     ]
 
 
