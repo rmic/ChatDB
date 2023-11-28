@@ -237,7 +237,7 @@ async def main(message: cl.Message):
         else:
             response = str(e)
 
-        await cl.Message(content=response, disable_human_feedback=True).send()
+    await cl.Message(content=response, disable_human_feedback=True).send()
 
     if suggestions_are_enabled():
         question="based on the previous questions, please generate a few additional questions related to the same topic if relevant. If you feel like this is not the time to do so, just output a nice message to tell the user you are there to help."
