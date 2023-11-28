@@ -19,7 +19,7 @@ from chatbot.human_input import HumanInputChainlit
 from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT # , CHART_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
-from chatbot.chart_tool import ChartChain
+#from chatbot.chart_tool import ChartChain
 import yaml
 
 os.environ["OPENAI_API_KEY"] = "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"
