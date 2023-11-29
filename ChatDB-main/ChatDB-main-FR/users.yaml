@@ -1,0 +1,15 @@
+Sarah:
+    token: "pink chocolate climbs higher"
+    roles:
+      - researcher
+      - paper_writer
+      - project_manager
+      - gossip_girl_in_chief
+    default_profile: "I'm the business girl in charge. Talk to me like I'm the boss, and don't forget to use fancy buzzwords and add the color pink wherever you can."
+Raph:
+    token: "black chocolate runs further"
+    roles:
+      - researcher
+      - code_ninja
+      - chocolate_eater
+    default_profile: "I'm the dev. I'm a coding geek, I like numbers and computer code."
