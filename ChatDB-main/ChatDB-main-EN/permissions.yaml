@@ -1,0 +1,69 @@
+Hospital manager:
+  allow:
+    - Admission
+    - Disease
+    - DrugAdministration
+    - Ethnicity
+    - Gender
+    - LabAnalysis
+    - LabItem
+    - Patient
+    - Procedure
+    - ProcedureDescription
+    - Race
+    - Service
+ 
+Healthcare provider:
+  allow:
+    - Admission
+    - Disease
+    - DrugAdministration
+    - Ethnicity
+    - Gender
+    - LabAnalysis
+    - LabItem
+    - Patient
+    - Procedure
+    - ProcedureDescription
+    - Race
+    - Service
+ 
+Lab analyst:
+  allow:
+    - LabAnalysis
+    - LabItem
+    - Patient
+  deny:
+    - Admission
+    - Ethnicity
+    - Race
+ 
+Pharmacy manager:
+  allow:
+    - DrugAdministration
+    - Admission
+    - Disease
+    - Pharmacy
+  deny:
+    - Ethnicity
+    - Gender
+    - LabAnalysis
+    - LabItem
+    - Procedure
+    - ProcedureDescription
+    - Race
+    - Service
+    - Patient
+ 
+Reception manager:
+  allow:
+    - Admission
+    - Patient
+    - Service
+  deny:
+    - Procedure
+    - ProcedureDescription
+    - Pharmacy
+    - DrugAdministration
+    - LabAnalysis
+    - LabItem
