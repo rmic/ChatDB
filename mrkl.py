@@ -16,10 +16,10 @@ from langchain.graphs import Neo4jGraph
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
 from chatbot.human_input import HumanInputChainlit
-from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT # , CHART_GENERATION_PROMPT
+from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT , CHART_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
-#from chatbot.chart_tool import ChartChain
+from chatbot.chart_tool import ChartChain
 import yaml
 
 os.environ["OPENAI_API_KEY"] = "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"
@@ -43,9 +43,9 @@ cypher_tool = RBACGraphCypherQAChain.from_llm(
     oai, graph=graph, verbose=True, prompt=CYPHER_GENERATION_PROMPT
 )
 
-#chart_tool = ChartChain.from_llm(
-#    oai, verbose=True, prompt=CHART_GENERATION_PROMPT
-#)
+chart_tool = ChartChain.from_llm(
+    oai, verbose=True, prompt=CHART_GENERATION_PROMPT
+)
 @cl.action_callback("Ask !")
 async def on_question(action):
     agent = cl.user_session.get("agent")  # type: AgentExecutor
@@ -192,16 +192,16 @@ async def start():
                  to help you find the information you need with ease.
                  """
         ),
-        # Tool(
+        #Tool(
         #     name="Chart generation tool",
-        #     func=chart_tool.run,
-        #     description = """
-        #              Utilize this tool to generate a chart url that will be displayed in the chat,
-        #              This tool is to be used when numerical data is requested and a graphical visualization
-        #              would provide a better user experience.
-        #              When using this tool, if the response begins with "Final Answer", just forward it without adding anything around it.
-        #              """
-        # )
+         #    func=chart_tool.run,
+         #    description = """
+         #             Utilize this tool to generate a chart url that will be displayed in the chat,
+         #             This tool is to be used when numerical data is requested and a graphical visualization
+         #             would provide a better user experience.
+         #             When using this tool, if the response begins with "Final Answer", just forward it without adding anything around it.
+         #             """
+        #)
     ]
 
 
@@ -229,6 +229,26 @@ def extract_url(text):
     url_pattern = r"https://quickchart.io/chart?c=(.*)}"
     return re.match(url_pattern, r"https://quickchart.io/chart?c=\1").group(0)
 
+def convert_to_img_tag(input_string):
+    # Define a regular expression to match URLs
+    url_pattern = re.compile(r'https?://quickchart.io/chart?c=\S+')
+
+    # Find the first URL in the input string
+    match = url_pattern.search(input_string)
+
+    if match:
+        # Extract the URL from the match
+        url = match.group()
+
+        # Replace the URL with the HTML img tag
+        img_tag = f'<img src="{url}" alt="Image">'
+        result_string = url_pattern.sub(img_tag, input_string, count=1)
+
+        return result_string
+    else:
+        # If no URL is found, return the original string
+        return input_string
+
 @cl.on_message
 async def main(message: cl.Message):
     agent_executor = cl.user_session.get("agent")  # type: AgentExecutor
@@ -236,6 +256,9 @@ async def main(message: cl.Message):
 
     try:
         response = await cl.make_async(agent_executor.run)({"input":str(message.content), "user_profile":user_profile, "today":datetime.datetime.now().strftime("%Y-%m-%d")},callbacks=[cl.LangchainCallbackHandler()])
+
+        response = convert_to_img_tag(response)
+
     except Exception as e:
         if "Final Answer:" in str(e):
             position = str(e).find("Final Answer:")

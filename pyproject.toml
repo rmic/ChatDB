@@ -1,6 +1,6 @@
 [project]
 name = "chatdb"
-version = "0.1.17"
+version = "0.1.18"
 authors = [{ name = "Raphael Michel", email = "raphael.michel@cetic.be" }, { name = "Sarah Pinon", email = "sarah.pinon@unamur.be" }]
 description = "A demonstration of a BI chatbot"
 readme = "README.md"
