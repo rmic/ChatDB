@@ -70,6 +70,10 @@ hide_cot = false
 [features]
 prompt_playground = false
 multi_modal = false
+unsafe_allow_html = true
+[features.speech_to_text]
+enabled = false
+language = "fr"
 
 [meta]
 generated_by = "0.6.402"

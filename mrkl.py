@@ -143,6 +143,12 @@ async def start():
 
     lines= []
 
+    with open("Welcome_Page", 'r') as fp:
+        lines = fp.readlines()
+
+    welcome_message = "<br/>".join(lines)
+    await cl.Message(content=welcome_message).send()
+
     settings = await cl.ChatSettings(
         [
             Select(
@@ -230,7 +236,7 @@ async def main(message: cl.Message):
 
     try:
         response = await cl.make_async(agent_executor.run)({"input":str(message.content), "user_profile":user_profile, "today":datetime.datetime.now().strftime("%Y-%m-%d")},callbacks=[cl.LangchainCallbackHandler()])
-    except OutputParserException as e:
+    except Exception as e:
         if "Final Answer:" in str(e):
             position = str(e).find("Final Answer:")
             response = str(e)[position+16:]
