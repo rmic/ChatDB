@@ -5,7 +5,7 @@ from langchain.schema import HumanMessage
 
 class ExtendedConversationEntityMemory(ConversationEntityMemory):
     extra_variables:List[str] = []
-    memory_key = "history"
+    memory_key:str = "history"
     @property
     def memory_variables(self) -> List[str]:
         """Will always return list of memory variables."""

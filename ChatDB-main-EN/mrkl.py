@@ -5,33 +5,39 @@ import re
 import sys
 
 from chainlit.input_widget import TextInput, Select, Switch
-from langchain import PromptTemplate, OpenAI, ConversationChain
-from langchain.agents import initialize_agent, Tool, AgentExecutor, AgentType, ConversationalAgent, ZeroShotAgent
-from langchain.memory import ConversationEntityMemory
-from langchain.memory.prompt import ENTITY_MEMORY_CONVERSATION_TEMPLATE
+from langchain import ConversationChain
+from langchain.agents import Tool, AgentExecutor, ZeroShotAgent
+
 from langchain.chat_models import ChatOpenAI
 import os
 import chainlit as cl
-from langchain.graphs import Neo4jGraph
-from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
+from langchain_neo4j import Neo4jGraph
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain.schema import SystemMessage, OutputParserException
 from chatbot.human_input import HumanInputChainlit
-from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT # , CHART_GENERATION_PROMPT
+from chatbot.prompts import create_prompt, CYPHER_GENERATION_TEMPLATE, CYPHER_GENERATION_PROMPT
 from chatbot.memory import ExtendedConversationEntityMemory
 from chatbot.neo4j_tool import RBACGraphCypherQAChain
-#from chatbot.chart_tool import ChartChain
+
 import yaml
 
-os.environ["OPENAI_API_KEY"] = "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"
+# Required env variables
+# OPENAI_API_KEY
+# NEO4J_URL
+# NEO4J_USERNAME
+# NEO4J_PASSWORD
+# NEO4J_DATABASE
+
 try:
     graph = Neo4jGraph(
-        url="neo4j+s://26aef8a7.databases.neo4j.io",
-        username="neo4j",
-        password="rC7s6H6iL3PbQF7lXx6NyDxF3rB3sXBfyj7QSlLGE_s",
-        database="neo4j"
+        url=os.environ.get("NEO4J_URL"),
+        username=os.environ.get("NEO4J_USERNAME"),
+        password=os.environ.get("NEO4J_PASSWORD"),
+        database=os.environ.get("NEO4J_DATABASE")
     )
-except ValueError:
-    logging.error("On dirait que la db neo4j est down ou en pause.\nVa voir sur https://console.neo4j.io/?product=aura-db#databases/26aef8a7/detail et clique sur ▶️")
+except ValueError as e:
+    logging.error("On dirait que la db neo4j est down ou en pause...")
+    logging.error(e)
     sys.exit(1)
 
 # oai = le modèle qui va générer le code cypher pour la db neo4j

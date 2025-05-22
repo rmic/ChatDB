@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional
 import datetime
 from langchain.callbacks.manager import CallbackManagerForChainRun
 from langchain.chains.base import Chain
-from langchain.chains.graph_qa.prompts import CYPHER_GENERATION_PROMPT, CYPHER_QA_PROMPT
+from langchain_community.chains.graph_qa.prompts import CYPHER_GENERATION_PROMPT, CYPHER_QA_PROMPT
 from langchain.chains.llm import LLMChain
-from langchain.graphs.neo4j_graph import Neo4jGraph
+from langchain_neo4j import Neo4jGraph
 from langchain.pydantic_v1 import Field
 from langchain.schema import BasePromptTemplate
 from langchain.schema.language_model import BaseLanguageModel
@@ -66,9 +66,9 @@ class RBACGraphCypherQAChain(Chain):
     """Whether or not to return the intermediate steps along with the final answer."""
     return_direct: bool = False
     """Whether or not to return the result of querying the graph directly."""
-    user_roles = []
-    user_allowed = []
-    user_denied = []
+    user_roles:[str] = []
+    user_allowed:[str] = []
+    user_denied:[str] = []
 
     @property
     def input_keys(self) -> List[str]:

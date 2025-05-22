@@ -6,13 +6,13 @@ from langchain.tools import BaseTool
 class HumanInputChainlit(BaseTool):
     """Tool that adds the capability to ask user for input."""
 
-    name = "human"
-    description = (
+    name:str = "human"
+    description:str = (
         "You can ask a human for guidance when you think you "
         "got stuck or you are not sure what to do next. "
         "The input should be a question for the human."
     )
-    user_profile = ""
+    user_profile:str = ""
     def _run(
         self,
         query: str,
